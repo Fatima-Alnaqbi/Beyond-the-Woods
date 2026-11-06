@@ -17,8 +17,22 @@ MonoBehaviour:
   dialogueLines:
   - Hey there young man. . .
   - What are you doing wandering around the forest?
-  autoProgressLines: 0100
+  - It's dangerous. . .
+  - It won't be too dangerous though if you stay in the areas with MUSHROOMS.
+  - Monsters can handle them!
+  - Speaking of mushrooms, I need like 6 of them but my legs are no good. . .
+  - Could you get me some?
+  - Thanks! I would really appreciate it.
+  - Oh. . . Alright then
+  autoProgressLines: 01010101010100
+  endDialogueLines: 000000000000000101
   autoProgressDelay: 2
   typingSpeed: 0.05
   voiceSound: {fileID: 0}
   voicePitch: 1
+  choices:
+  - dialogueIndex: 6
+    choices:
+    - Sure..?
+    - Nahh
+    nextDialogueIndexes: 0700000008000000

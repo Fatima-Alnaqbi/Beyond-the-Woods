@@ -1,17 +1,20 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class NPC : MonoBehaviour, IInteractable
 {
+    public bool givesMushroomQuest = false;
     public NPCDialogue dialogueData;
-    public GameObject dialoguePanel;
-    public TMP_Text dialogueText, nameText;
-    public Image portraitImage;
+    private DialogueController dialogueUI;
 
     private int dialogueIndex;
     private bool isTyping, isDialogueActive;
+    private bool showingQuestThanks;
+
+    private void Start()
+    {
+        dialogueUI = DialogueController.Instance;
+    }
     
     public bool CanInteract()
     {
@@ -35,27 +38,63 @@ public class NPC : MonoBehaviour, IInteractable
     void StartDialogue()
     {
         isDialogueActive = true;
+        if (givesMushroomQuest && ShroomQuest.Instance != null)
+        {
+            if (!ShroomQuest.Instance.questStarted)
+                ShroomQuest.Instance.StartQuest();
+            else if (!ShroomQuest.Instance.questCompleted &&
+                ShroomQuest.Instance.collectedMushrooms >=
+                ShroomQuest.Instance.requiredMushrooms)
+                ShroomQuest.Instance.CompleteQuest();
+        }   
         dialogueIndex = 0;
         
-        nameText.SetText(dialogueData.npcName);
-        portraitImage.sprite = dialogueData.npcPortrait;
+        dialogueUI.SetNPCInfo(dialogueData.npcName, dialogueData.npcPortrait);
+        dialogueUI.ShowDialogueUI(true);
 
-        dialoguePanel.SetActive(true);
-
-        StartCoroutine(TypeLine());
+        if (givesMushroomQuest && ShroomQuest.Instance != null && ShroomQuest.Instance.questCompleted)
+        {
+            showingQuestThanks = true;
+            dialogueUI.SetDialogueText(
+            "THANK YOU! Tell me anything you need and ill help!");
+        }
+        else
+        {
+            showingQuestThanks = false;
+            DisplayCurrentLine();
+        }
 
     }
     void NextLine()
     {
+        if (showingQuestThanks)
+        {
+            EndDialogue();
+            return;
+        }
         if (isTyping)
         {
             StopAllCoroutines();
-            dialogueText.SetText(dialogueData.dialogueLines[dialogueIndex]);
+            dialogueUI.SetDialogueText(dialogueData.dialogueLines[dialogueIndex]);
             isTyping = false;
         }
-        else if (++dialogueIndex < dialogueData.dialogueLines.Length)
+        dialogueUI.ClearChoices();
+        if (dialogueData.endDialogueLines.Length > dialogueIndex && dialogueData.endDialogueLines[dialogueIndex])
         {
-            StartCoroutine(TypeLine());
+            EndDialogue();
+            return;
+        }
+        foreach(DialogueChoice dialogueChoice in dialogueData.choices)
+        {
+            if (dialogueChoice.dialogueIndex == dialogueIndex)
+            {
+                DisplayChoices(dialogueChoice);
+                return;
+            }
+        }
+        if (++dialogueIndex < dialogueData.dialogueLines.Length)
+        {
+            DisplayCurrentLine();
         }
         else
         {
@@ -66,11 +105,11 @@ public class NPC : MonoBehaviour, IInteractable
     IEnumerator TypeLine()
     {
         isTyping = true;
-        dialogueText.SetText("");
+        dialogueUI.SetDialogueText("");
 
         foreach(char letter in dialogueData.dialogueLines[dialogueIndex])
         {
-            dialogueText.text += letter;
+            dialogueUI.SetDialogueText(dialogueUI.dialogueText.text += letter);
             yield return new WaitForSeconds(dialogueData.typingSpeed);
         }
         isTyping = false;
@@ -80,11 +119,30 @@ public class NPC : MonoBehaviour, IInteractable
             NextLine();
         }
     }
+    void DisplayChoices(DialogueChoice choice)
+    {
+        for(int i = 0; i < choice.choices.Length; i++)
+        {
+            int nextIndex = choice.nextDialogueIndexes[i];
+            dialogueUI.CreateChoiceButton(choice.choices[i], () => ChooseOption(nextIndex));
+        }
+    }
+    void ChooseOption(int nextIndex)
+    {
+        dialogueIndex = nextIndex;
+        dialogueUI.ClearChoices();
+        DisplayCurrentLine();
+    }
+    void DisplayCurrentLine()
+    {
+        StopAllCoroutines();
+        StartCoroutine(TypeLine());
+    }
     public void EndDialogue()
     {
         StopAllCoroutines();
         isDialogueActive = false;
-        dialogueText.SetText("");
-        dialoguePanel.SetActive(false);
+        dialogueUI.SetDialogueText("");
+        dialogueUI.ShowDialogueUI(false);
     }
 }
