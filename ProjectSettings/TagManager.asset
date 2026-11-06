@@ -44,6 +44,9 @@ TagManager:
   - name: GroundBase
     uniqueID: 793579525
     locked: 0
+  - name: GroundCollider
+    uniqueID: 3374521855
+    locked: 0
   - name: GroundTop
     uniqueID: 2098111479
     locked: 0
@@ -52,6 +55,9 @@ TagManager:
     locked: 0
   - name: Collision
     uniqueID: 1937839933
+    locked: 0
+  - name: NPC
+    uniqueID: 2253401111
     locked: 0
   - name: Player
     uniqueID: 3428717485
